@@ -28,7 +28,7 @@ Resources:
   CreateMedicineFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: create-medicine
+      FunctionName: create_medicine
       CodeUri: backend/lambda_functions/create_medicine/
       Handler: lambda_function.lambda_handler
       Runtime: python3.12
