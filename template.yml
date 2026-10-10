@@ -20,6 +20,11 @@ Resources:
         - AttributeName: medicine_id
           KeyType: HASH
 
+  MedicineHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+
   CreateMedicineFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -38,7 +43,16 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref MedicineTable
 
+      Events:
+        CreateMedicine:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MedicineHttpApi
+            Path: /medicines
+            Method: POST
+
 Outputs:
+
   MedicineTableName:
     Description: DynamoDB table name
     Value: !Ref MedicineTable
@@ -46,3 +60,7 @@ Outputs:
   CreateMedicineFunctionName:
     Description: Lambda function name
     Value: !Ref CreateMedicineFunction
+
+  MedicineApiUrl:
+    Description: Medicine API Gateway endpoint
+    Value: !Sub 'https://${MedicineHttpApi}.execute-api.${AWS::Region}.amazonaws.com'
