@@ -8,6 +8,7 @@ on:
     paths:
       - 'template.yml'
       - 'backend/lambda_functions/create_medicine/**'
+      - 'backend/get_medicines/**'
       - '.github/workflows/deploy.yml'
 
   workflow_dispatch:
