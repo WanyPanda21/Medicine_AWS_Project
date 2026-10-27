@@ -1,0 +1,98 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Medicine Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="container nav">
+            <a class="brand" href="/">Medicine Manager</a>
+            <a class="button" href="/admin">+ Add Medicine</a>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <p class="eyebrow">INVENTORY MANAGEMENT</p>
+            <h1>Medicines</h1>
+            <p>View and manage your medicine inventory.</p>
+        </section>
+
+        {% if message %}
+            <div class="alert success">{{ message }}</div>
+        {% endif %}
+
+        {% if error %}
+            <div class="alert error">{{ error }}</div>
+        {% endif %}
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Medicine inventory</h2>
+                    <p>{{ medicines|length }} records on this page</p>
+                </div>
+                <a class="button secondary" href="/admin">Create medicine</a>
+            </div>
+
+            {% if medicines %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Brand</th>
+                            <th>Category</th>
+                            <th>Strength</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for medicine in medicines %}
+                        <tr>
+                            <td>
+                                <strong>{{ medicine.name }}</strong>
+                                <small>{{ medicine.medicine_id }}</small>
+                            </td>
+                            <td>{{ medicine.brand }}</td>
+                            <td>{{ medicine.category }}</td>
+                            <td>{{ medicine.strength }}</td>
+                            <td>₹{{ medicine.price }}</td>
+                            <td>{{ medicine.stock }}</td>
+                            <td>
+                                <span class="status">
+                                    {{ medicine.status }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <div class="empty">
+                    <h3>No medicines to display</h3>
+                    <p>
+                        {% if error %}
+                            Check your DynamoDB configuration and try again.
+                        {% else %}
+                            Create your first medicine to get started.
+                        {% endif %}
+                    </p>
+                    <a class="button" href="/admin">Add a medicine</a>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer class="container footer">
+        Medicine Management · FastAPI and DynamoDB
+    </footer>
+</body>
+</html>

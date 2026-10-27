@@ -2,7 +2,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 
-Description: Medicine API Lambda and DynamoDB deployment
+Description: Medicine Management FastAPI, Lambda and DynamoDB
 
 Resources:
 
@@ -11,11 +11,9 @@ Resources:
     Properties:
       TableName: MedicineTable
       BillingMode: PAY_PER_REQUEST
-
       AttributeDefinitions:
         - AttributeName: medicine_id
           AttributeType: S
-
       KeySchema:
         - AttributeName: medicine_id
           KeyType: HASH
@@ -24,7 +22,38 @@ Resources:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: $default
-  # New Create Medicines Lambda
+
+  FastApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: medicine_fastapi
+      CodeUri: backend/
+      Handler: main.handler
+      Runtime: python3.12
+      Timeout: 30
+      MemorySize: 256
+      Environment:
+        Variables:
+          MEDICINE_TABLE: !Ref MedicineTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref MedicineTable
+      Events:
+        Root:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MedicineHttpApi
+            Path: /
+            Method: ANY
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MedicineHttpApi
+            Path: /{proxy+}
+            Method: ANY
+
+  # Retain the existing Lambda handlers for compatibility.
+  # FastAPI now owns the public API routes.
   CreateMedicineFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -34,24 +63,13 @@ Resources:
       Runtime: python3.12
       Timeout: 10
       MemorySize: 128
-
       Environment:
         Variables:
           MEDICINE_TABLE: !Ref MedicineTable
-
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MedicineTable
 
-      Events:
-        CreateMedicine:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MedicineHttpApi
-            Path: /medicines
-            Method: POST
-
-  # New Get Medicines Lambda
   GetMedicinesFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -59,29 +77,14 @@ Resources:
       CodeUri: backend/lambda_functions/get_medicines/
       Handler: lambda_function.lambda_handler
       Runtime: python3.12
-      Timeout: 10
+      Timeout: 30
       MemorySize: 128
-
       Environment:
         Variables:
-          MEDICINE_TABLE: Medicines
-
+          MEDICINE_TABLE: !Ref MedicineTable
       Policies:
-        - Statement:
-            - Effect: Allow
-              Action:
-                - dynamodb:Scan
-              Resource: !Sub
-                - arn:${AWS::Partition}:dynamodb:${AWS::Region}:${AWS::AccountId}:table/Medicines
-                - {}
-
-      Events:
-        GetMedicines:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MedicineHttpApi
-            Path: /medicines
-            Method: GET
+        - DynamoDBReadPolicy:
+            TableName: !Ref MedicineTable
 
 Outputs:
 
@@ -89,13 +92,18 @@ Outputs:
     Description: DynamoDB table name
     Value: !Ref MedicineTable
 
+  FastApiFunctionName:
+    Description: FastAPI Lambda function
+    Value: !Ref FastApiFunction
+
   CreateMedicineFunctionName:
-    Description: Lambda function name
+    Description: Existing create Lambda function
     Value: !Ref CreateMedicineFunction
+
   GetMedicinesFunctionName:
-    Description: Get Medicines Lambda
+    Description: Existing get Lambda function
     Value: !Ref GetMedicinesFunction
 
   MedicineApiUrl:
-    Description: Medicine API Gateway endpoint
+    Description: Medicine application URL
     Value: !Sub 'https://${MedicineHttpApi}.execute-api.${AWS::Region}.amazonaws.com'

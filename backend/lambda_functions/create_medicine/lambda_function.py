@@ -1,4 +1,4 @@
-
+import os
 import json
 import boto3
 import uuid
@@ -9,7 +9,9 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table("Medicines")
+table = dynamodb.Table(
+    os.environ.get("MEDICINE_TABLE", "MedicineTable")
+)
 
 
 def lambda_handler(event, context):

@@ -1,0 +1,266 @@
+
+:root {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #202b3c;
+    background: #f5f7fb;
+    font-synthesis: none;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+}
+
+.container {
+    width: min(1180px, calc(100% - 40px));
+    margin: 0 auto;
+}
+
+.topbar {
+    background: #fff;
+    border-bottom: 1px solid #e6eaf1;
+}
+
+.nav {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.brand {
+    color: #233b70;
+    font-size: 20px;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 17px;
+    border: 1px solid #315cbd;
+    border-radius: 8px;
+    background: #315cbd;
+    color: white;
+    font: inherit;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.button:hover {
+    background: #254b9f;
+}
+
+.button.secondary {
+    background: white;
+    color: #315cbd;
+    border-color: #d6dfef;
+}
+
+.hero {
+    padding: 38px 0 26px;
+}
+
+.eyebrow {
+    color: #315cbd;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: 1.5px;
+}
+
+h1 {
+    margin: 8px 0;
+    font-size: clamp(28px, 4vw, 38px);
+    letter-spacing: -1px;
+}
+
+.hero > p:last-child,
+.panel-heading p {
+    color: #68758a;
+}
+
+.panel {
+    margin-bottom: 32px;
+    overflow: hidden;
+    border: 1px solid #e4e9f1;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 6px 24px rgb(28 43 70 / 4%);
+}
+
+.panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 22px 24px;
+}
+
+.panel-heading h2 {
+    margin: 0;
+    font-size: 19px;
+}
+
+.panel-heading p {
+    margin-bottom: 0;
+    font-size: 13px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+th,
+td {
+    padding: 16px 20px;
+    border-top: 1px solid #edf0f5;
+    text-align: left;
+    font-size: 14px;
+}
+
+th {
+    background: #fafbfe;
+    color: #68758a;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+
+td small {
+    display: block;
+    margin-top: 5px;
+    color: #7c8798;
+}
+
+.status {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    background: #e7f7ee;
+    color: #197747;
+    font-size: 11px;
+    font-weight: 750;
+}
+
+.empty {
+    padding: 50px 20px;
+    text-align: center;
+}
+
+.empty p {
+    margin-bottom: 22px;
+    color: #68758a;
+}
+
+.alert {
+    margin: 0 0 20px;
+    padding: 13px 16px;
+    border-radius: 8px;
+}
+
+.success {
+    background: #e7f7ee;
+    color: #197747;
+}
+
+.error {
+    background: #fff0f0;
+    color: #a52828;
+}
+
+.form-page {
+    max-width: 900px;
+}
+
+.form-panel {
+    padding: 28px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.field label {
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.field input {
+    width: 100%;
+    min-width: 0;
+    padding: 12px 13px;
+    border: 1px solid #d6deea;
+    border-radius: 8px;
+    background: #fff;
+    color: #202b3c;
+    font: inherit;
+}
+
+.field input:focus {
+    outline: 2px solid #b9ccfa;
+    border-color: #315cbd;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid #edf0f5;
+}
+
+.footer {
+    padding: 20px 0 32px;
+    color: #7c8798;
+    font-size: 13px;
+}
+
+@media (max-width: 650px) {
+    .container {
+        width: calc(100% - 24px);
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .panel-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .form-panel {
+        padding: 18px;
+    }
+
+    .nav {
+        min-height: 64px;
+    }
+
+    .brand {
+        font-size: 17px;
+    }
+}
