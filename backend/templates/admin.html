@@ -1,0 +1,80 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Add Medicine</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="container nav">
+            <a class="brand" href="/">Medicine Manager</a>
+            <a class="button secondary" href="/">View inventory</a>
+        </div>
+    </header>
+
+    <main class="container form-page">
+        <section class="hero">
+            <p class="eyebrow">INVENTORY MANAGEMENT</p>
+            <h1>Add a medicine</h1>
+            <p>Enter the medicine details below.</p>
+        </section>
+
+        {% if error %}
+            <div class="alert error">{{ error }}</div>
+        {% endif %}
+
+        <section class="panel form-panel">
+            <form action="/admin/medicines" method="post">
+                <div class="form-grid">
+                    <div class="field">
+                        <label for="name">Medicine name</label>
+                        <input id="name" name="name" type="text"
+                               placeholder="Paracetamol" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="brand">Brand</label>
+                        <input id="brand" name="brand" type="text"
+                               placeholder="A Pharma" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="category">Category</label>
+                        <input id="category" name="category" type="text"
+                               placeholder="Fever" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="strength">Strength</label>
+                        <input id="strength" name="strength" type="text"
+                               placeholder="600mg" required>
+                    </div>
+
+                    <div class="field">
+                        <label for="price">Price (₹)</label>
+                        <input id="price" name="price" type="number"
+                               min="0" step="0.01" placeholder="160.00"
+                               required>
+                    </div>
+
+                    <div class="field">
+                        <label for="stock">Stock quantity</label>
+                        <input id="stock" name="stock" type="number"
+                               min="0" step="1" placeholder="124" required>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <a class="button secondary" href="/">Cancel</a>
+                    <button class="button" type="submit">
+                        Save medicine
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
