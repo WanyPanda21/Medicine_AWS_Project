@@ -29,7 +29,7 @@ Resources:
       FunctionName: medicine_fastapi
       CodeUri: backend/
       Handler: main.handler
-      Runtime: python3.12
+      Runtime: python3.13
       Timeout: 30
       MemorySize: 256
       Environment:
@@ -60,7 +60,7 @@ Resources:
       FunctionName: create_medicine
       CodeUri: backend/lambda_functions/create_medicine/
       Handler: lambda_function.lambda_handler
-      Runtime: python3.12
+      Runtime: python3.13
       Timeout: 10
       MemorySize: 128
       Environment:
@@ -76,7 +76,7 @@ Resources:
       FunctionName: get_medicines
       CodeUri: backend/lambda_functions/get_medicines/
       Handler: lambda_function.lambda_handler
-      Runtime: python3.12
+      Runtime: python3.13
       Timeout: 30
       MemorySize: 128
       Environment:
