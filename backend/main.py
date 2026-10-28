@@ -4,6 +4,8 @@ import os
 import uuid
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+import json
+from botocore.exceptions import ClientError, BotoCoreError
 
 import boto3
 from botocore.exceptions import ClientError
@@ -17,10 +19,21 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
-TABLE_NAME = os.getenv("MEDICINE_TABLE", "MedicineTable")
 
-dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table(TABLE_NAME)
+AWS_REGION = os.getenv("AWS_REGION", "ap-southeast-2")
+
+CREATE_LAMBDA = os.getenv(
+    "CREATE_MEDICINE_FUNCTION", "create_medicine"
+)
+
+GET_LAMBDA = os.getenv(
+    "GET_MEDICINES_FUNCTION", "get_medicines"
+)
+
+lambda_client = boto3.client(
+    "lambda",
+    region_name=AWS_REGION,
+)
 
 app = FastAPI(title="Medicine Management API", version="1.0.0")
 app.mount(
@@ -31,15 +44,58 @@ app.mount(
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
+def invoke_backend_lambda(
+    function_name: str,
+    payload: dict,
+) -> dict:
+    response = lambda_client.invoke(
+        FunctionName=function_name,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(payload).encode("utf-8"),
+    )
+
+    result = json.loads(response["Payload"].read())
+
+    if response.get("FunctionError"):
+        logger.error(
+            "Lambda %s failed: %s",
+            function_name,
+            result,
+        )
+        raise RuntimeError(
+            f"Backend Lambda {function_name} failed"
+        )
+
+    # Handle the API Gateway-style response.
+    if isinstance(result, dict) and "statusCode" in result:
+        status_code = result["statusCode"]
+        body = result.get("body", {})
+
+        if isinstance(body, str):
+            try:
+                body = json.loads(body)
+            except json.JSONDecodeError:
+                body = {"message": body}
+
+        if status_code >= 400:
+            raise RuntimeError(
+                body.get("message", "Backend Lambda request failed")
+                if isinstance(body, dict)
+                else "Backend Lambda request failed"
+            )
+
+        return body if isinstance(body, dict) else {"data": body}
+
+    return result
+
+
 def validate_medicine(data: dict) -> dict:
     required_fields = ("name", "brand", "category", "strength")
 
     for field in required_fields:
         value = data.get(field)
         if not isinstance(value, str) or not value.strip():
-            raise ValueError(
-                f"{field.capitalize()} is required"
-            )
+            raise ValueError(f"{field.capitalize()} is required")
 
     stock = data.get("stock")
     if isinstance(stock, bool) or not isinstance(stock, int) or stock < 0:
@@ -71,44 +127,61 @@ def validate_medicine(data: dict) -> dict:
 
 
 def create_medicine_record(data: dict) -> dict:
+    # Keep your existing FastAPI validation.
     medicine = validate_medicine(data)
 
-    table.put_item(
-        Item=medicine,
-        ConditionExpression="attribute_not_exists(medicine_id)",
+    # Send the data to AWS Lambda, not DynamoDB.
+    payload = {
+        "name": medicine["name"],
+        "brand": medicine["brand"],
+        "category": medicine["category"],
+        "strength": medicine["strength"],
+        "price": format(medicine["price"], ".2f"),
+        "stock": medicine["stock"],
+    }
+
+    result = invoke_backend_lambda(
+        CREATE_LAMBDA,
+        payload,
     )
 
-    logger.info("Created medicine %s", medicine["medicine_id"])
+    # Your create Lambda returns:
+    # {"message": "...", "medicine": {...}}
+    created_medicine = result.get("medicine")
 
-    # Preserve the original Lambda's read-after-write verification.
-    table.get_item(
-        Key={"medicine_id": medicine["medicine_id"]},
-        ConsistentRead=True,
+    if not isinstance(created_medicine, dict):
+        raise RuntimeError(
+            "Create Lambda returned an invalid response"
+        )
+
+    logger.info(
+        "Created medicine through AWS Lambda: %s",
+        created_medicine.get("medicine_id"),
     )
 
-    result = dict(medicine)
-    result["price"] = format(medicine["price"], ".2f")
-    return result
-
+    return created_medicine
 
 def get_all_medicines() -> list:
-    medicines = []
-    params = {}
+    result = invoke_backend_lambda(
+        GET_LAMBDA,
+        {},
+    )
 
-    while True:
-        result = table.scan(**params)
-        medicines.extend(result.get("Items", []))
+    # Expected response:
+    # {"medicines": [...]}
+    medicines = result.get("medicines")
 
-        last_key = result.get("LastEvaluatedKey")
-        if not last_key:
-            break
+    if not isinstance(medicines, list):
+        raise RuntimeError(
+            "Get Medicines Lambda returned an invalid response"
+        )
 
-        params = {"ExclusiveStartKey": last_key}
-
-    # Decimal is retained in DynamoDB but formatted for API/UI output.
     for medicine in medicines:
         if "price" in medicine:
-            medicine["price"] = format(Decimal(str(medicine["price"])), ".2f")
+            medicine["price"] = format(
+                Decimal(str(medicine["price"])),
+                ".2f",
+            )
 
     return medicines
 

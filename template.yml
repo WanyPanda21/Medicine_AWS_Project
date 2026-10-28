@@ -23,6 +23,7 @@ Resources:
     Properties:
       StageName: $default
 
+  
   FastApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -32,12 +33,22 @@ Resources:
       Runtime: python3.13
       Timeout: 30
       MemorySize: 256
+
       Environment:
         Variables:
           MEDICINE_TABLE: !Ref MedicineTable
+          CREATE_MEDICINE_FUNCTION: !Ref CreateMedicineFunction
+          GET_MEDICINES_FUNCTION: !Ref GetMedicinesFunction
+
       Policies:
-        - DynamoDBCrudPolicy:
-            TableName: !Ref MedicineTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - lambda:InvokeFunction
+              Resource:
+                - !GetAtt CreateMedicineFunction.Arn
+                - !GetAtt GetMedicinesFunction.Arn
+
       Events:
         Root:
           Type: HttpApi
@@ -45,12 +56,14 @@ Resources:
             ApiId: !Ref MedicineHttpApi
             Path: /
             Method: ANY
+
         Proxy:
           Type: HttpApi
           Properties:
             ApiId: !Ref MedicineHttpApi
             Path: /{proxy+}
             Method: ANY
+
 
   # Retain the existing Lambda handlers for compatibility.
   # FastAPI now owns the public API routes.
@@ -69,6 +82,20 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MedicineTable
+      Events:
+        Root:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MedicineHttpApi
+            Path: /
+            Method: ANY
+
+        Proxy:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref MedicineHttpApi
+            Path: /{proxy+}
+            Method: ANY
 
   GetMedicinesFunction:
     Type: AWS::Serverless::Function
