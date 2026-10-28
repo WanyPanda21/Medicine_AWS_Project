@@ -82,20 +82,7 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref MedicineTable
-      Events:
-        Root:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MedicineHttpApi
-            Path: /
-            Method: ANY
 
-        Proxy:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MedicineHttpApi
-            Path: /{proxy+}
-            Method: ANY
 
   GetMedicinesFunction:
     Type: AWS::Serverless::Function
