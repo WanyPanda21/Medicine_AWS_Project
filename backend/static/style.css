@@ -264,3 +264,28 @@ td small {
         font-size: 17px;
     }
 }
+
+.medicine-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin: 20px 0;
+}
+
+.medicine-filters input,
+.medicine-filters select,
+.medicine-filters button,
+.medicine-filters a {
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.medicine-filters input {
+    min-width: 220px;
+}
+
+.medicine-filters button {
+    cursor: pointer;
+}

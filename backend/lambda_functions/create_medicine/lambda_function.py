@@ -64,7 +64,7 @@ def lambda_handler(event, context):
                 "message": "Price must be a valid non-negative number"
             })
 
-        # Create medicine record
+        # Create ccine record
         medicine_id = "MED-" + str(uuid.uuid4())[:8]
 
         medicine = {

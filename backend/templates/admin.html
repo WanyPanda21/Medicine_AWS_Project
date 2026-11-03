@@ -1,80 +1,338 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Add Medicine</title>
+
     <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
+
+    <!-- Navigation -->
     <header class="topbar">
         <div class="container nav">
+
             <a class="brand" href="/">Medicine Manager</a>
-            <a class="button secondary" href="/">View inventory</a>
+
+            <a class="button secondary" href="/">
+                View inventory
+            </a>
+
         </div>
     </header>
 
+
+    <!-- Main Content -->
     <main class="container form-page">
+
         <section class="hero">
+
             <p class="eyebrow">INVENTORY MANAGEMENT</p>
+
             <h1>Add a medicine</h1>
+
             <p>Enter the medicine details below.</p>
+
         </section>
 
-        {% if error %}
-            <div class="alert error">{{ error }}</div>
-        {% endif %}
 
+        <!-- Medicine Form -->
         <section class="panel form-panel">
-            <form action="/admin/medicines" method="post">
+
+            <form id="medicineForm">
+
                 <div class="form-grid">
+
                     <div class="field">
+
                         <label for="name">Medicine name</label>
-                        <input id="name" name="name" type="text"
-                               placeholder="Paracetamol" required>
+
+                        <input
+                            id="name"
+                            name="name"
+                            type="text"
+                            placeholder="Paracetamol"
+                            required
+                        >
+
                     </div>
 
+
                     <div class="field">
+
                         <label for="brand">Brand</label>
-                        <input id="brand" name="brand" type="text"
-                               placeholder="A Pharma" required>
+
+                        <input
+                            id="brand"
+                            name="brand"
+                            type="text"
+                            placeholder="A Pharma"
+                            required
+                        >
+
                     </div>
 
+
                     <div class="field">
+
                         <label for="category">Category</label>
-                        <input id="category" name="category" type="text"
-                               placeholder="Fever" required>
+
+                        <input
+                            id="category"
+                            name="category"
+                            type="text"
+                            placeholder="Fever"
+                            required
+                        >
+
                     </div>
 
+
                     <div class="field">
+
                         <label for="strength">Strength</label>
-                        <input id="strength" name="strength" type="text"
-                               placeholder="600mg" required>
+
+                        <input
+                            id="strength"
+                            name="strength"
+                            type="text"
+                            placeholder="500mg"
+                            required
+                        >
+
                     </div>
 
+
                     <div class="field">
+
                         <label for="price">Price (₹)</label>
-                        <input id="price" name="price" type="number"
-                               min="0" step="0.01" placeholder="160.00"
-                               required>
+
+                        <input
+                            id="price"
+                            name="price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="160.00"
+                            required
+                        >
+
                     </div>
 
+
                     <div class="field">
+
                         <label for="stock">Stock quantity</label>
-                        <input id="stock" name="stock" type="number"
-                               min="0" step="1" placeholder="124" required>
+
+                        <input
+                            id="stock"
+                            name="stock"
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="124"
+                            required
+                        >
+
                     </div>
+
                 </div>
 
+
+                <!-- API Response Message -->
+                <div id="message" class="alert" hidden></div>
+
+
+                <!-- Buttons -->
                 <div class="form-actions">
-                    <a class="button secondary" href="/">Cancel</a>
-                    <button class="button" type="submit">
+
+                    <a class="button secondary" href="/">
+                        Cancel
+                    </a>
+
+                    <button
+                        class="button"
+                        type="submit"
+                        id="saveButton"
+                    >
                         Save medicine
                     </button>
+
                 </div>
+
             </form>
+
         </section>
+
     </main>
+
+
+    <script>
+
+        const API_URL = "/api/medicines";
+
+        const medicineForm =
+            document.getElementById("medicineForm");
+
+        const message =
+            document.getElementById("message");
+
+        const saveButton =
+            document.getElementById("saveButton");
+
+
+        // POST API - Create medicine
+
+        medicineForm.addEventListener("submit", async function(event) {
+
+            event.preventDefault();
+
+            const medicineData = {
+
+                name: medicineForm.elements["name"].value.trim(),
+
+                brand: medicineForm.elements["brand"].value.trim(),
+
+                category: medicineForm.elements["category"].value.trim(),
+
+                strength: medicineForm.elements["strength"].value.trim(),
+
+                price: Number(medicineForm.elements["price"].value),
+
+                stock: Number(medicineForm.elements["stock"].value)
+
+            };
+
+
+            // Basic frontend validation
+
+            if (
+                !medicineData.name ||
+                !medicineData.brand ||
+                !medicineData.category ||
+                !medicineData.strength
+            ) {
+
+                showMessage("Please fill all medicine details.", "error");
+
+                return;
+
+            }
+
+            if (
+                !Number.isFinite(medicineData.price) ||
+                medicineData.price < 0
+            ) {
+
+                showMessage("Enter a valid price.", "error");
+
+                return;
+
+            }
+
+            if (
+                !Number.isInteger(medicineData.stock) ||
+                medicineData.stock < 0
+            ) {
+
+                showMessage(
+                    "Stock must be a non-negative integer.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            try {
+
+                saveButton.disabled = true;
+
+                saveButton.textContent = "Saving...";
+
+
+                // Send POST request to FastAPI
+
+                const response = await fetch(API_URL, {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(medicineData)
+
+                });
+
+
+                const result = await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        typeof result.detail === "string"
+                            ? result.detail
+                            : JSON.stringify(result.detail || result)
+                    );
+
+                }
+
+
+                showMessage(
+                    "Medicine created successfully!",
+                    "success"
+                );
+
+
+                medicineForm.reset();
+
+
+                // Redirect to inventory after successful creation
+
+                setTimeout(function() {
+
+                    window.location.href = "/";
+
+                }, 1200);
+
+
+            } catch (error) {
+
+                showMessage(error.message, "error");
+
+            } finally {
+
+                saveButton.disabled = false;
+
+                saveButton.textContent = "Save medicine";
+
+            }
+
+        });
+
+
+        // Display API response messages
+
+        function showMessage(text, type) {
+
+            message.hidden = false;
+
+            message.textContent = text;
+
+            message.className = "alert " + type;
+
+        }
+
+    </script>
+
 </body>
+
 </html>

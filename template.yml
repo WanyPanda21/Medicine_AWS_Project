@@ -49,20 +49,21 @@ Resources:
                 - !GetAtt CreateMedicineFunction.Arn
                 - !GetAtt GetMedicinesFunction.Arn
 
+      
       Events:
-        Root:
-          Type: HttpApi
-          Properties:
-            ApiId: !Ref MedicineHttpApi
-            Path: /
-            Method: ANY
 
-        Proxy:
-          Type: HttpApi
+        GetMedicinesApi:
+          Type: Api
           Properties:
-            ApiId: !Ref MedicineHttpApi
-            Path: /{proxy+}
-            Method: ANY
+            Path: /api/medicines
+            Method: GET
+
+        CreateMedicineApi:
+          Type: Api
+          Properties:
+            Path: /api/medicines
+            Method: POST
+
 
 
   # Retain the existing Lambda handlers for compatibility.
