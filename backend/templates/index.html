@@ -1,98 +1,573 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <title>Medicine Management</title>
+
     <link rel="stylesheet" href="/static/style.css">
+
 </head>
+
+
 <body>
+
+    <!-- Navigation -->
     <header class="topbar">
+
         <div class="container nav">
-            <a class="brand" href="/">Medicine Manager</a>
-            <a class="button" href="/admin">+ Add Medicine</a>
+
+            <a class="brand" href="/">
+                Medicine Manager
+            </a>
+
+            <a class="button" href="/admin">
+                + Add Medicine
+            </a>
+
         </div>
+
     </header>
 
+
+    <!-- Main Content -->
     <main class="container">
+
         <section class="hero">
+
             <p class="eyebrow">INVENTORY MANAGEMENT</p>
+
             <h1>Medicines</h1>
+
             <p>View and manage your medicine inventory.</p>
+
         </section>
 
-        {% if message %}
-            <div class="alert success">{{ message }}</div>
-        {% endif %}
 
-        {% if error %}
-            <div class="alert error">{{ error }}</div>
-        {% endif %}
+        <!-- Success / Error Message -->
+        <div id="pageMessage" class="alert" hidden></div>
 
+
+        <!-- Medicine Inventory -->
         <section class="panel">
+
             <div class="panel-heading">
+
                 <div>
+
                     <h2>Medicine inventory</h2>
-                    <p>{{ medicines|length }} records on this page</p>
+
+                    <p id="recordCount">
+                        Loading medicines...
+                    </p>
+
                 </div>
-                <a class="button secondary" href="/admin">Create medicine</a>
+
+                <a class="button secondary" href="/admin">
+                    Create medicine
+                </a>
+
             </div>
 
-            {% if medicines %}
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Medicine</th>
-                            <th>Brand</th>
-                            <th>Category</th>
-                            <th>Strength</th>
-                            <th>Price</th>
-                            <th>Stock</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for medicine in medicines %}
-                        <tr>
-                            <td>
-                                <strong>{{ medicine.name }}</strong>
-                                <small>{{ medicine.medicine_id }}</small>
-                            </td>
-                            <td>{{ medicine.brand }}</td>
-                            <td>{{ medicine.category }}</td>
-                            <td>{{ medicine.strength }}</td>
-                            <td>₹{{ medicine.price }}</td>
-                            <td>{{ medicine.stock }}</td>
-                            <td>
-                                <span class="status">
-                                    {{ medicine.status }}
-                                </span>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
+
+            <!-- Search and Filters -->
+            <form id="filterForm" class="medicine-filters">
+
+                <input
+                    type="text"
+                    id="search"
+                    placeholder="Search medicine name or brand"
+                >
+
+
+                <select id="category">
+
+                    <option value="">All categories</option>
+
+                </select>
+
+
+                <select id="status">
+
+                    <option value="">All statuses</option>
+
+                    <option value="ACTIVE">Active</option>
+
+                    <option value="INACTIVE">Inactive</option>
+
+                </select>
+
+
+                <button type="submit">
+                    Search / Filter
+                </button>
+
+
+                <button type="button" id="clearFilters">
+                    Clear filters
+                </button>
+
+            </form>
+
+
+            <!-- Medicine Table -->
+            <div id="medicineTable">
+
                 <div class="empty">
-                    <h3>No medicines to display</h3>
-                    <p>
-                        {% if error %}
-                            Check your DynamoDB configuration and try again.
-                        {% else %}
-                            Create your first medicine to get started.
-                        {% endif %}
-                    </p>
-                    <a class="button" href="/admin">Add a medicine</a>
+
+                    <h3>Loading medicines...</h3>
+
+                    <p>Please wait while we fetch your inventory.</p>
+
                 </div>
-            {% endif %}
+
+            </div>
+
         </section>
+
     </main>
 
+
+    <!-- Footer -->
     <footer class="container footer">
-        Medicine Management · FastAPI and DynamoDB
+
+        Medicine Management · FastAPI and AWS Lambda
+
     </footer>
+
+
+    <script>
+
+        const API_URL = "/api/medicines";
+
+        let allMedicines = [];
+
+
+        // GET API - Fetch medicines from backend Lambda
+
+        async function loadMedicines() {
+
+            const table =
+                document.getElementById("medicineTable");
+
+            const recordCount =
+                document.getElementById("recordCount");
+
+
+            try {
+
+                const response = await fetch(API_URL);
+
+                const result = await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        result.detail || "Unable to fetch medicines"
+                    );
+
+                }
+
+
+                // Store all medicine records
+
+                allMedicines = result.medicines || [];
+
+
+                // Load category dropdown
+
+                loadCategories();
+
+
+                // Display medicine records
+
+                displayMedicines(allMedicines);
+
+
+            } catch (error) {
+
+                table.innerHTML = `
+                    <div class="empty">
+                        <h3>Unable to load medicines</h3>
+                        <p>${escapeHTML(error.message)}</p>
+                    </div>
+                `;
+
+                recordCount.textContent = "Loading failed";
+
+            }
+
+        }
+
+
+        // Load categories dynamically
+
+        function loadCategories() {
+
+            const categoryDropdown =
+                document.getElementById("category");
+
+            const selectedCategory =
+                categoryDropdown.value;
+
+
+            const categories = [
+
+                ...new Set(
+
+                    allMedicines
+
+                        .map(medicine => medicine.category)
+
+                        .filter(Boolean)
+
+                )
+
+            ].sort();
+
+
+            categoryDropdown.innerHTML =
+                '<option value="">All categories</option>';
+
+
+            categories.forEach(category => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value = category;
+
+                option.textContent = category;
+
+                categoryDropdown.appendChild(option);
+
+            });
+
+
+            categoryDropdown.value = selectedCategory;
+
+        }
+
+
+        // Display medicines in HTML table
+
+        function displayMedicines(medicines) {
+
+            const table =
+                document.getElementById("medicineTable");
+
+            const recordCount =
+                document.getElementById("recordCount");
+
+
+            recordCount.textContent =
+                medicines.length + " records on this page";
+
+
+            if (medicines.length === 0) {
+
+                table.innerHTML = `
+                    <div class="empty">
+
+                        <h3>No medicines to display</h3>
+
+                        <p>
+                            No matching medicine records found.
+                        </p>
+
+                        <a class="button" href="/admin">
+                            Add a medicine
+                        </a>
+
+                    </div>
+                `;
+
+                return;
+
+            }
+
+
+            const tableElement =
+                document.createElement("table");
+
+
+            tableElement.innerHTML = `
+
+                <thead>
+
+                    <tr>
+
+                        <th>Medicine</th>
+
+                        <th>Brand</th>
+
+                        <th>Category</th>
+
+                        <th>Strength</th>
+
+                        <th>Price</th>
+
+                        <th>Stock</th>
+
+                        <th>Status</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody></tbody>
+
+            `;
+
+
+            const tbody =
+                tableElement.querySelector("tbody");
+
+
+            medicines.forEach(medicine => {
+
+                const row =
+                    document.createElement("tr");
+
+
+                const nameCell =
+                    document.createElement("td");
+
+                const name =
+                    document.createElement("strong");
+
+                name.textContent = medicine.name ?? "";
+
+                const id =
+                    document.createElement("small");
+
+                id.textContent =
+                    medicine.medicine_id ?? "";
+
+                nameCell.appendChild(name);
+
+                nameCell.appendChild(
+                    document.createElement("br")
+                );
+
+                nameCell.appendChild(id);
+
+
+                row.appendChild(nameCell);
+
+
+                const values = [
+
+                    medicine.brand,
+
+                    medicine.category,
+
+                    medicine.strength,
+
+                    "₹" + (medicine.price ?? "0"),
+
+                    medicine.stock,
+
+                    medicine.status
+
+                ];
+
+
+                values.forEach(value => {
+
+                    const cell =
+                        document.createElement("td");
+
+                    cell.textContent = value ?? "";
+
+                    row.appendChild(cell);
+
+                });
+
+
+                tbody.appendChild(row);
+
+            });
+
+
+            const wrapper =
+                document.createElement("div");
+
+            wrapper.className = "table-wrap";
+
+            wrapper.appendChild(tableElement);
+
+
+            table.replaceChildren(wrapper);
+
+        }
+
+
+        // Search and filter medicines
+
+        function filterMedicines() {
+
+            const search = document
+
+                .getElementById("search")
+
+                .value
+
+                .trim()
+
+                .toLowerCase();
+
+
+            const category = document
+
+                .getElementById("category")
+
+                .value
+
+                .toLowerCase();
+
+
+            const status = document
+
+                .getElementById("status")
+
+                .value
+
+                .toLowerCase();
+
+
+            const filteredMedicines =
+
+                allMedicines.filter(medicine => {
+
+
+                    // Search by medicine name or brand
+
+                    const matchesSearch =
+
+                        (medicine.name || "")
+
+                            .toLowerCase()
+
+                            .includes(search)
+
+                        ||
+
+                        (medicine.brand || "")
+
+                            .toLowerCase()
+
+                            .includes(search);
+
+
+                    // Filter by category
+
+                    const matchesCategory =
+
+                        !category ||
+
+                        (medicine.category || "")
+
+                            .toLowerCase() === category;
+
+
+                    // Filter by status
+
+                    const matchesStatus =
+
+                        !status ||
+
+                        (medicine.status || "")
+
+                            .toLowerCase() === status;
+
+
+                    return (
+
+                        matchesSearch &&
+
+                        matchesCategory &&
+
+                        matchesStatus
+
+                    );
+
+                });
+
+
+            displayMedicines(filteredMedicines);
+
+        }
+
+
+        // Search button
+
+        document
+
+            .getElementById("filterForm")
+
+            .addEventListener("submit", function(event) {
+
+                event.preventDefault();
+
+                filterMedicines();
+
+            });
+
+
+        // Clear all filters
+
+        document
+
+            .getElementById("clearFilters")
+
+            .addEventListener("click", function() {
+
+                document
+
+                    .getElementById("filterForm")
+
+                    .reset();
+
+
+                displayMedicines(allMedicines);
+
+            });
+
+
+        // Prevent HTML injection in error messages
+
+        function escapeHTML(value) {
+
+            return String(value).replace(/[&<>"']/g, char => ({
+
+                "&": "&amp;",
+
+                "<": "&lt;",
+
+                ">": "&gt;",
+
+                '"': "&quot;",
+
+                "'": "&#039;"
+
+            })[char]);
+
+        }
+
+
+        // Execute GET API when page loads
+
+        loadMedicines();
+
+    </script>
+
 </body>
+
 </html>
